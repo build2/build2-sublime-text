@@ -1,0 +1,38 @@
+%YAML 1.2
+---
+name: build2 buildfile
+file_extensions:
+  - root.build
+  - export.build
+  - bootstrap.build
+  - config.build
+  - buildfile
+scope: source.build2.buildfile
+contexts:
+  main:
+    - match: '"'
+      scope: punctuation.definition.string.begin.build2.buildfile
+      push: double_quoted_string
+
+    - match: '#'
+      scope: punctuation.definition.comment.build2.buildfile
+      push: line_comment
+
+    - match: '\b(if|else|for|while)\b'
+      scope: keyword.control.build2.buildfile
+
+    - match: '\b(-)?[0-9.]+\b'
+      scope: constant.numeric.build2.buildfile
+
+  double_quoted_string:
+    - meta_scope: string.quoted.double.build2.buildfile
+    - match: '\\.'
+      scope: constant.character.escape.build2.buildfile
+    - match: '"'
+      scope: punctuation.definition.string.end.build2.buildfile
+      pop: true
+
+  line_comment:
+    - meta_scope: comment.line.build2.buildfile
+    - match: $
+      pop: true

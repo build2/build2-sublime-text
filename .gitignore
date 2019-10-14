@@ -1,0 +1,8 @@
+*
+
+!*.sublime-syntax
+!*.tmPreferences
+
+!README.md
+
+!.gitignore
