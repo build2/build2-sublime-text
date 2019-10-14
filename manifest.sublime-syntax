@@ -50,6 +50,18 @@ contexts:
     - match: '\b(url|doc-url|src-url|package-url|email|package-email|build-email|build-warning-email|build-error-email)\b'
       scope: variable.language.build2.manifest
       push: [web, define]
+    - match: depends
+      scope: variable.language.build2.manifest
+      push: [depends, define]
+    - match: requires
+      scope: variable.language.build2.manifest
+      push: [requires, define]
+    - match: builds
+      scope: variable.language.build2.manifest
+      push: [builds, define]
+    - match: '\b(build-include|build-exclude)\b'
+      scope: variable.language.build2.manifest
+      push: [build-config, define]
     - match: '\b[^:\s]+\b'
       scope: source.build2.manifest
       push: [other_variable, define]
@@ -114,7 +126,7 @@ contexts:
   name:
     - include: line_mode
     - match: '\b(?!(build|con|prn|aux|nul|com1|com2|com3|com4|com5|com6|com7|com8|com9|lpt1|lpt2|lpt3|lpt4|lpt5|lpt6|lpt7|lpt8|lpt9)[\b\s])(([a-zA-Z])([a-zA-Z0-9._+-]*)([a-zA-Z0-9+]))'
-      scope: entity.name
+      scope: entity.name.build2.manifest
 
   version:
     - include: line_mode
@@ -162,5 +174,52 @@ contexts:
     - include: line_mode
     - include: documentation_comments
 
+  depends:
+    - include: line_mode
+    - include: documentation_comments
+    - match: '(==|<=|>=|[?*~\^<>|])'
+      scope: keyword.operator.build2.manifest
+    - match: '\('
+      scope: punctuation.section.parens.begin.build2.manifest
+    - match: '\)'
+      scope: punctuation.section.parens.end.build2.manifest
+    - match: '\['
+      scope: punctuation.section.brackets.begin.build2.manifest
+    - match: '\]'
+      scope: punctuation.section.brackets.end.build2.manifest
+    - match: '\b(?!(build|con|prn|aux|nul|com1|com2|com3|com4|com5|com6|com7|com8|com9|lpt1|lpt2|lpt3|lpt4|lpt5|lpt6|lpt7|lpt8|lpt9)[\b\s])(([a-zA-Z])([a-zA-Z0-9._+-]*)([a-zA-Z0-9+]))'
+      scope: entity.name.build2.manifest
+    - match: '\b((([0-9]+)\.([0-9]+)\.([0-9]+)(?:-([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?)(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?)\b'
+      scope: constant.numeric.build2.manifest
 
+  requires:
+    - include: line_mode
+    - include: documentation_comments
+    - match: '(==|<=|>=|[?~\^<>|])'
+      scope: keyword.operator.build2.manifest
+    - match: '\b(c\+\+98|c\+\+03|c\+\+11|c\+\+14|c\+\+17|c\+\+20|c\+\+23|posix|linux|macos|freebsd|windows)\b'
+      scope: constant.language.build2.manifest
+    - match: '\b(gcc|clang)(_[0-9](.[0-9](.[0-9])?)?)?\b'
+      scope: constant.language.build2.manifest
+    - match: '\bmsvc(_[0-9][0-9a-zA-Z]*)?\b'
+      scope: constant.language.build2.manifest
+    # - match: '\b(?!(build|con|prn|aux|nul|com1|com2|com3|com4|com5|com6|com7|com8|com9|lpt1|lpt2|lpt3|lpt4|lpt5|lpt6|lpt7|lpt8|lpt9)[\b\s])(([a-zA-Z])([a-zA-Z0-9._+-]*)([a-zA-Z0-9+]))'
+    #   scope: entity.name.build2.manifest
+    - match: '\b((([0-9]+)\.([0-9]+)\.([0-9]+)(?:-([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?)(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?)\b'
+      scope: constant.numeric.build2.manifest
 
+  builds:
+    - include: line_mode
+    - include: documentation_comments
+    - match: '(|<=|>=|[:&!+|-])'
+      scope: keyword.operator.build2.manifest
+    - match: '\('
+      scope: punctuation.section.parens.begin.build2.manifest
+    - match: '\)'
+      scope: punctuation.section.parens.end.build2.manifest
+    - match: '\b(all|default|none|experimental|legacy|optimized|gcc|clang|linux|macos|windows)\b'
+      scope: constant.language.build2.manifest
+
+  build-config:
+    - include: line_mode
+    - include: documentation_comments
