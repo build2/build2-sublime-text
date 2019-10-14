@@ -8,39 +8,159 @@ file_extensions:
 scope: source.build2.manifest
 contexts:
   main:
-    - match: ":"
-      scope: punctuation.definition.version.build2.manifest
-      push: manifest_version
-
-    - match: '"'
-      scope: punctuation.definition.string.begin.build2.manifest
-      push: double_quoted_string
-
-    - match: "\n#"
+    - match: '^([\s]*)#'
       scope: punctuation.definition.comment.build2.manifest
       push: line_comment
-
-    - match: '\b(if|else|for|while)\b'
-      scope: keyword.control.build2.manifest
-
-    - match: '\b(-)?[0-9.]+\b'
-      scope: constant.numeric.build2.manifest
-
-
-  manifest_version:
-    - meta_scope: constant.numeric.build2.manifest
-    - match: $
-      pop: true
-
-  double_quoted_string:
-    - meta_scope: string.quoted.double.build2.manifest
-    - match: '\\.'
-      scope: constant.character.escape.build2.manifest
-    - match: '"'
-      scope: punctuation.definition.string.end.build2.manifest
-      pop: true
+    - match: ':'
+      scope: punctuation.definition.variable.build2.manifest
+      push: format_version
+    - match: '\b(name|project)\b'
+      scope: variable.language.build2.manifest
+      set: [name, define]
+    - match: version
+      scope: variable.language.build2.manifest
+      set: [version, define]
+    - match: priority
+      scope: variable.language.build2.manifest
+      set: [priority, define]
+    - match: '\b(summary)\b'
+      scope: variable.language.build2.manifest
+      set: [summary, define]
+    - match: license
+      scope: variable.language.build2.manifest
+      push: [license, define]
+    - match: '\b(topics|keywords)\b'
+      scope: variable.language.build2.manifest
+      push: [topics, define]
+    - match: description-file
+      scope: variable.language.build2.manifest
+      push: [description-file, define]
+    - match: description-type
+      scope: variable.language.build2.manifest
+      push: [description-type, define]
+    - match: description
+      scope: variable.language.build2.manifest
+      push: [description, define]
+    - match: changes-file
+      scope: variable.language.build2.manifest
+      push: [changes-file, define]
+    - match: changes
+      scope: variable.language.build2.manifest
+      push: [changes, define]
+    - match: '\b(url|doc-url|src-url|package-url|email|package-email|build-email|build-warning-email|build-error-email)\b'
+      scope: variable.language.build2.manifest
+      push: [web, define]
+    - match: '\b[^:\s]+\b'
+      scope: source.build2.manifest
+      push: [other_variable, define]
 
   line_comment:
     - meta_scope: comment.line.build2.manifest
     - match: $
       pop: true
+
+  define:
+    - match: '(:)(\\\n)'
+      set: [main, multi_line_mode]
+      captures:
+        1: punctuation.definition.variable.build2.manifest
+        2: constant.character.escape.build2.manifest
+    - match: ':'
+      scope: punctuation.definition.variable.build2.manifest
+      pop: true
+
+  line_mode:
+    - match: '\\\\'
+      scope: constant.character.escape.build2.manifest
+    - match: '\\\n'
+      scope: constant.character.escape.build2.manifest
+    - match: '\n'
+      pop: true
+
+  multi_line_mode:
+    - meta_scope: text.build2.manifest
+    - match: '\\\\'
+      scope: constant.character.escape.build2.manifest
+    - match: '^\\\n'
+      scope: constant.character.escape.build2.manifest
+      pop: true
+    - match: '^<EOF>$'
+      scope: constant.character.escape.build2.manifest
+      pop: true
+    - match: '\\\n'
+      scope: constant.character.escape.build2.manifest
+
+  documentation_comments:
+    - match: '\\;'
+      scope: constant.character.escape.build2.manifest
+    - match: ';'
+      scope: punctuation.definition.comment.line.documentation.build2.manifest
+      push: documentation_line_comment
+  documentation_line_comment:
+    - meta_scope: comment.line.documentation.build2.manifest
+    - match: $
+      pop: true
+
+  other_variable:
+    - include: line_mode
+    - include: documentation_comments
+
+  format_version:
+    - match: '\b[0-9]*\b'
+      scope: constant.numeric.build2.manifest
+    - match: $
+      pop: true
+
+  name:
+    - include: line_mode
+    - match: '\b(?!(build|con|prn|aux|nul|com1|com2|com3|com4|com5|com6|com7|com8|com9|lpt1|lpt2|lpt3|lpt4|lpt5|lpt6|lpt7|lpt8|lpt9)[\b\s])(([a-zA-Z])([a-zA-Z0-9._+-]*)([a-zA-Z0-9+]))'
+      scope: entity.name
+
+  version:
+    - include: line_mode
+    - match: '\b((([0-9]+)\.([0-9]+)\.([0-9]+)(?:-([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?)(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?)\b'
+      scope: constant.numeric.build2.manifest
+
+  priority:
+    - include: line_mode
+    - include: documentation_comments
+    - match: '\b(security|high|medium|low)\b'
+      scope: constant.language.build2.manifest
+
+  summary:
+    - include: line_mode
+
+  license:
+    - include: line_mode
+    - include: documentation_comments
+    - match: '\b(MIT|BSD2|BSD3|BSD4|GPLv2|GPLv3|LGPLv2.1|LGPLv2|LGPLv3|AGPLv2|AGPLv3|ASLv1.1|ASLv1|ASLv2|MPLv2|public domain|available source|proprietary|TODO)\b'
+      scope: constant.language.build2.manifest
+
+  topics:
+    - include: line_mode
+
+  description-file:
+    - include: line_mode
+    - include: documentation_comments
+
+  description-type:
+    - include: line_mode
+    - match: '\b(text/plain|text/markdown;variant=GFM|text/markdown;variant=CommonMark)\b'
+      scope: constant.language.build2.manifest
+
+  description:
+    - include: line_mode
+
+  changes-file:
+    - include: line_mode
+    - include: documentation_comments
+
+  changes:
+    - include: line_mode
+
+  web:
+    - include: line_mode
+    - include: documentation_comments
+
+
+
