@@ -10,29 +10,58 @@ file_extensions:
 scope: source.build2.buildfile
 contexts:
   main:
-    - match: '"'
-      scope: punctuation.definition.string.begin.build2.buildfile
-      push: double_quoted_string
+    - include: multi_line_comments
+    - include: line_comments
+    - include: blocks
+    - include: directives
+    - include: variables
 
+  line_mode:
+    - match: '\\\n'
+      scope: constant.character.escape.build2.buildfile
+    - match: '\n'
+      pop: true
+
+  line_comments:
     - match: '#'
       scope: punctuation.definition.comment.build2.buildfile
       push: line_comment
-
-    - match: '\b(if|else|for|while)\b'
-      scope: keyword.control.build2.buildfile
-
-    - match: '\b(-)?[0-9.]+\b'
-      scope: constant.numeric.build2.buildfile
-
-  double_quoted_string:
-    - meta_scope: string.quoted.double.build2.buildfile
-    - match: '\\.'
-      scope: constant.character.escape.build2.buildfile
-    - match: '"'
-      scope: punctuation.definition.string.end.build2.buildfile
-      pop: true
-
   line_comment:
     - meta_scope: comment.line.build2.buildfile
     - match: $
       pop: true
+
+  multi_line_comments:
+    - match: '^[\s]*(#\\)[\s]*$'
+      captures:
+        1: punctuation.definition.comment.build2.buildfile
+      push: multi_line_comment
+  multi_line_comment:
+    - meta_scope: comment.block.build2.buildfile
+    - match: '^[\s]*(#\\)[\s]*$'
+      pop: true
+
+  blocks:
+    - match: '^[\s]*(\{)[\s]*$'
+      captures:
+        1: punctuation.section.block.begin.build2.buildfile
+      push: block
+  block:
+    - meta_scope: meta.block
+    - include: main
+    - match: '^[\s]*(\})[\s]*$'
+      pop: true
+
+  directives:
+    - match: '\b(include|import|using|export|info)\b'
+      scope: keyword.control.import.build2.buildfile
+      push: directive
+  directive:
+    - include: line_mode
+
+  variables:
+    - match: '\b(project)\b'
+      scope: variable.language.build2.buildfile
+      push: variable
+  variable:
+    - include: line_mode
