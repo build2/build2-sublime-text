@@ -3,8 +3,6 @@
 name: build2 manifest
 file_extensions:
   - manifest
-  - repositories.manifest
-  - package.manifest
 scope: source.build2.manifest
 contexts:
   main:
