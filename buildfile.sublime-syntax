@@ -12,15 +12,41 @@ contexts:
   main:
     - include: multi_line_comments
     - include: line_comments
-    - include: blocks
     - include: directives
-    - include: variables
+    - include: variable_assignments
+    - include: function_calls
+    - include: variable_expansions
+    - include: eval_contexts
+    - include: directories
+    - include: dependency_declarations
+    - include: conditions
+    - include: loops
+    - include: double_quotes
+    - include: single_quotes
 
-  line_mode:
+  bare_line_mode:
+    - match: '\\\\'
+      scope: constant.character.escape.build2.buildfile
     - match: '\\\n'
+      scope: constant.character.escape.build2.buildfile
+    - match: '(\\ |\\\(|\\\)|\\\{|\\\}|\\\[|\\\]|\\\@|\\\#|\\\$|\\")'
       scope: constant.character.escape.build2.buildfile
     - match: '\n'
       pop: true
+    - include: line_comments
+    - include: function_calls
+    - include: variable_expansions
+    - include: eval_contexts
+    - include: constants
+
+  line_mode:
+    - include: bare_line_mode
+    - include: double_quotes
+    - include: single_quotes
+
+  constants:
+    - match: '\b(true|false|null)\b'
+      scope: constant.language.build2.buildfile
 
   line_comments:
     - match: '#'
@@ -34,11 +60,36 @@ contexts:
   multi_line_comments:
     - match: '^[\s]*(#\\)[\s]*$'
       captures:
-        1: punctuation.definition.comment.build2.buildfile
+        1: punctuation.definition.comment.begin.build2.buildfile.multi_line_comments
       push: multi_line_comment
   multi_line_comment:
-    - meta_scope: comment.block.build2.buildfile
+    - meta_scope: comment.block.build2.buildfile.multi_line_comment
     - match: '^[\s]*(#\\)[\s]*$'
+      captures:
+        1: punctuation.definition.comment.end.build2.buildfile.multi_line_comment
+      pop: true
+
+  single_quotes:
+    - match: "'"
+      scope: punctuation.definition.string.begin.build2.buildfile
+      push: single_quote
+  single_quote:
+    - meta_scope: string.quoted.single.build2.buildfile
+    - match: "'"
+      scope: punctuation.definition.string.end.build2.buildfile
+      pop: true
+
+  double_quotes:
+    - match: '"'
+      scope: punctuation.definition.string.begin.build2.buildfile.double_quotes
+      push: double_quote
+  double_quote:
+    - meta_scope: string.quoted.double.build2.buildfile
+    - include: bare_line_mode
+    - match: '\\"'
+      scope: constant.character.escape.build2.buildfile.double_quote
+    - match: '"'
+      scope: punctuation.definition.string.end.build2.buildfile.double_quote
       pop: true
 
   blocks:
@@ -47,9 +98,173 @@ contexts:
         1: punctuation.section.block.begin.build2.buildfile
       push: block
   block:
-    - meta_scope: meta.block
+    - meta_scope: meta.block.build2.buildfile
     - include: main
     - match: '^[\s]*(\})[\s]*$'
+      pop: true
+
+  conditions:
+    - match: '\b(if|elif|else|if!|elif!)\b'
+      scope: keyword.control.build2.buildfile.condition
+      push: [condition_scopes, condition]
+  condition:
+    - include: line_mode
+  condition_scopes:
+    - match: '^[\s]*(\{)[\s]*$'
+      captures:
+        1: punctuation.section.block.begin.build2.buildfile.condition_scope
+      set: condition_scope
+    - match: '(?=.)'
+      pop: true
+  condition_scope:
+    - meta_scope: meta.block.build2.buildfile.condition_scope
+    - include: main
+    - match: '^[\s]*(\})[\s]*$'
+      captures:
+        1: punctuation.section.block.end.build2.buildfile.condition_scope
+      pop: true
+
+  loops:
+    - match: '\bfor\b'
+      scope: keyword.control.build2.buildfile.for
+      push: [loop_scopes, loop]
+  loop:
+    - include: line_mode
+    - include: name_generations
+  loop_scopes:
+    - match: '^[\s]*(\{)[\s]*$'
+      captures:
+        1: punctuation.section.block.begin.build2.buildfile.loop_scope
+      set: loop_scope
+    - match: '(?=.)'
+      pop: true
+  loop_scope:
+    - meta_scope: meta.block.build2.buildfile.loop_scope
+    - include: main
+    - match: '^[\s]*(\})[\s]*$'
+      captures:
+        1: punctuation.section.block.end.build2.buildfile.loop_scope
+      pop: true
+
+  directories:
+    - match: '.(/)[\s]*\n'
+      captures:
+        1: constant.character.build2.buildfile.directories
+      set: directory_scopes
+  directory_scopes:
+    - match: '^[\s]*(\{)[\s]*$'
+      captures:
+        1: punctuation.section.block.begin.build2.buildfile.directory_scopes
+      set: directory_scope
+  directory_scope:
+    - meta_scope: meta.block.build2.buildfile.directory_scope
+    - include: main
+    - match: '^[\s]*(\})[\s]*$'
+      pop: true
+
+  dependency_declarations:
+    - match: '([a-z]+)(\{)'
+      captures:
+        1: entity.name.type.build2.buildfile
+        2: punctuation.section.braces.begin.build2.buildfile
+      push: [target_scopes, target_name]
+      # push: target_name
+    - match: '\{'
+      scope: punctuation.section.braces.begin.build2.buildfile
+      push: [target_scopes, type_generation]
+      # push: type_generation
+    - match: '(?!\s)(/)[\s]*(:)'
+      captures:
+        1: constant.character.build2.buildfile
+        2: keyword.operator.build2.buildfile
+      push: [target_scopes, dependencies]
+      # push: dependencies
+
+  type_generation:
+    - meta_scope: meta.braces.build2.buildfile.type_generation
+    - include: line_mode
+    - match: '(\*\*\*|\*\*|\*|\.|\?)'
+      scope: keyword.operator.build2.buildfile
+      set: target_name
+    - match: '(?!\s)(/)'
+      set: target_name
+    - match: '([a-z]+)'
+      scope: entity.name.type.build2.buildfile
+    - match: '(\})(\{)'
+      captures:
+        1: punctuation.section.braces.end.build2.buildfile.type_generation
+        2: punctuation.section.braces.begin.build2.buildfile.target_name
+      set: target_name
+
+  dependency_type_generation:
+    - meta_scope: meta.braces.build2.buildfile.dependency_type_generation
+    - include: line_mode
+    - match: '(\*\*\*|\*\*|\*|\.|\?)'
+      scope: keyword.operator.build2.buildfile
+      set: name_pattern
+    - match: '(?!\s)(/)'
+      set: name_pattern
+    - match: '([a-z]*)'
+      scope: entity.name.type.build2.buildfile
+    - match: '\}\{'
+      scope: punctuation.section.braces.end.build2.buildfile
+      set: name_pattern
+
+  target_name:
+    - meta_scope: meta.braces.build2.buildfile.target_name
+    - include: line_mode
+    - match: '(\*\*\*|\*\*|\*|\.|\?)'
+      scope: keyword.operator.build2.buildfile
+    - match: '(\})[\s]*(:)'
+      captures:
+        1: punctuation.section.braces.end.build2.buildfile
+        2: keyword.operator.build2.buildfile
+      set: dependencies
+
+  name_pattern:
+    - meta_scope: meta.braces.build2.buildfile.name_pattern
+    - include: line_mode
+    - match: '(\*\*\*|\*\*|\*|\.\.\.|\.\.|\.|\?|\+|\-)'
+      scope: keyword.operator.build2.buildfile
+    - match: '\}'
+      scope: punctuation.section.braces.end.build2.buildfile
+      pop: true
+
+  dependencies:
+    - meta_scope: meta.dependency.build2.buildfile
+    - include: line_mode
+    - match: '(?=(\+=|=\+|=))'
+      scope: keyword.operator.assignment.build2.buildfile
+      pop: true
+    - match: ':'
+      scope: keyword.operator
+    - match: '([a-z]+)(\{)'
+      captures:
+        1: entity.name.type.build2.buildfile
+        2: punctuation.section.braces.begin.build2.buildfile
+      push: name_pattern
+    - match: '\b(manifest|testscript)\b'
+      captures:
+        1: entity.name.type.build2.buildfile
+    - match: '\{'
+      scope: punctuation.section.braces.begin.build2.buildfile
+      push: dependency_type_generation
+
+  target_scopes:
+    - match: '^[\s]*(\{)[\s]*$'
+      captures:
+        1: punctuation.section.block.begin.build2.buildfile.target_scope
+      set: target_scope
+    - match: '\n'
+      pop: true
+    - match: '(?=.)'
+      pop: true
+  target_scope:
+    - meta_scope: meta.block.build2.buildfile.target_scope
+    - include: main
+    - match: '^[\s]*(\})[\s]*$'
+      captures:
+        1: punctuation.section.block.end.build2.buildfile.target_scope
       pop: true
 
   directives:
@@ -57,11 +272,75 @@ contexts:
       scope: keyword.control.import.build2.buildfile
       push: directive
   directive:
+    - meta_scope: meta.directive.build2.buildfile
     - include: line_mode
 
-  variables:
+  variable_assignments:
     - match: '\b(project)\b'
       scope: variable.language.build2.buildfile
-      push: variable
-  variable:
+    - match: '(config.)?(cc|cxx|c)(.export)?(.(poptions|coptions|loptions|libs))?'
+      scope: variable.language.build2.buildfile
+    - match: '(\+=|=\+|=)'
+      scope: keyword.operator.assignment.build2.buildfile
+      push: variable_assignment
+  variable_assignment:
+    - meta_scope: meta.variable_assignment.build2.buildfile
     - include: line_mode
+    - include: name_generations
+    - include: value_attributes
+
+  variable_expansions:
+    - match: '\$[a-zA-Z][a-zA-Z0-9_.]*\b'
+      scope: variable.other.build2.buildfile
+    - match: '\$\([a-zA-Z][a-zA-Z0-9_.]*\)'
+      scope: variable.other.build2.buildfile
+    - match: '(\$)(\()'
+      captures:
+        1: variable.other.build2.buildfile
+        2: punctuation.section.group.begin.build2.buildfile
+      push: eval_context
+
+  function_calls:
+    - match: '(\$[a-zA-Z][a-zA-Z0-9_.]*)(\()'
+      captures:
+        1: variable.function.build2.buildfile
+        2: punctuation.section.group.begin.build2.buildfile
+      push: eval_context
+
+  eval_contexts:
+    - match: '\('
+      scope: punctuation.section.group.begin.build2.buildfile
+      push: eval_context
+  eval_context:
+    - meta_scope: meta.group.build2.buildfile.eval_context
+    - include: line_mode
+    - include: value_attributes
+    - match: '\)'
+      scope: punctuation.section.group.end.build2.buildfile
+      pop: true
+    - match: '(\|\||&&|==|<=|>=|!=|[?:!<>])'
+      scope: keyword.operator.logical.build2.buildfile
+    - match: '[|,]'
+      scope: keyword.operator.build2.buildfile
+
+  name_generations:
+    - match: '\{'
+      scope: punctuation.section.brace.begin.build2.buildfile.name_generation
+      push: name_generation
+  name_generation:
+    - meta_scope: meta.name_generation.build2.buildfile
+    - match: '(\})(\{)'
+    - include: name_pattern
+
+  value_attributes:
+    - match: '\['
+      scope: punctuation.section.brackets.begin.build2.buildfile
+      push: value_attribute
+  value_attribute:
+    - meta_scope: meta.brackets.build2.buildfile.value_attribute
+    - include: line_mode
+    - match: '\]'
+      scope: punctuation.section.brackets.end.build2.buildfile
+      pop: true
+    - match: '@'
+      scope: keyword.operator.build2.buildfile
