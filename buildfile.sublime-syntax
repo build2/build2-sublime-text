@@ -150,7 +150,7 @@ contexts:
     - match: '.(/)[\s]*\n'
       captures:
         1: constant.character.build2.buildfile.directories
-      set: directory_scopes
+      push: directory_scopes
   directory_scopes:
     - match: '^[\s]*(\{)[\s]*$'
       captures:
@@ -276,6 +276,7 @@ contexts:
     - include: line_mode
 
   variable_assignments:
+    - meta_scope: test
     - match: '\b(project)\b'
       scope: variable.language.build2.buildfile
     - match: '(config.)?(cc|cxx|c)(.export)?(.(poptions|coptions|loptions|libs))?'

@@ -3,6 +3,7 @@
 !*.sublime-syntax
 !*.tmPreferences
 
+!LICENSE
 !README.md
 
 !.gitignore
