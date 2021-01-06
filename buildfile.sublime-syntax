@@ -13,12 +13,12 @@ contexts:
     - include: multi_line_comments
     - include: line_comments
     - include: directives
+    - include: dependency_declarations
     - include: variable_assignments
     - include: function_calls
     - include: variable_expansions
     - include: eval_contexts
     - include: directories
-    - include: dependency_declarations
     - include: conditions
     - include: loops
     - include: double_quotes
