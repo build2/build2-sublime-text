@@ -1,0 +1,14 @@
+{
+  "cmd": ["b"],
+  "keyfiles": "buildfile",
+  "working_dir": "${file_path}",
+  "variants": [
+  {
+    "name": "Clean",
+    "cmd": ["b", "clean"]
+  },
+  {
+    "name": "Test",
+    "cmd": ["b", "test"]
+  }]
+}

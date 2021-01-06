@@ -2,6 +2,7 @@
 
 !*.sublime-syntax
 !*.tmPreferences
+!*.sublime-build
 
 !LICENSE
 !README.md
