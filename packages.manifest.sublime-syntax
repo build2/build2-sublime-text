@@ -1,0 +1,86 @@
+%YAML 1.2
+---
+name: build2 package list manifest
+file_extensions:
+  - packages.manifest
+scope: source.build2.packages.manifest
+contexts:
+  main:
+    - match: '^([\s]*)#'
+      scope: punctuation.definition.comment.build2.repositories.manifest
+      push: line_comment
+    - match: ':'
+      scope: punctuation.definition.variable.build2.repositories.manifest
+      push: format_version
+    - match: location
+      scope: variable.language.build2.repositories.manifest
+      set: [location, define]
+    - match: fragment
+      scope: variable.language.build2.repositories.manifest
+      push: [fragment, define]
+    - match: '\b[^:\s]+\b'
+      scope: source.build2.repositories.manifest
+      push: [other_variable, define]
+
+  line_comment:
+    - meta_scope: comment.line.build2.repositories.manifest
+    - match: $
+      pop: true
+
+  define:
+    - match: '(:)(\\\n)'
+      set: [main, multi_line_mode]
+      captures:
+        1: punctuation.definition.variable.build2.repositories.manifest
+        2: constant.character.escape.build2.repositories.manifest
+    - match: ':'
+      scope: punctuation.definition.variable.build2.repositories.manifest
+      pop: true
+
+  line_mode:
+    - match: '\\\\'
+      scope: constant.character.escape.build2.repositories.manifest
+    - match: '\\\n'
+      scope: constant.character.escape.build2.repositories.manifest
+    - match: '\n'
+      pop: true
+
+  multi_line_mode:
+    - meta_scope: text.build2.repositories.manifest
+    - match: '\\\\'
+      scope: constant.character.escape.build2.repositories.manifest
+    - match: '^\\\n'
+      scope: constant.character.escape.build2.repositories.manifest
+      pop: true
+    - match: '^<EOF>$'
+      scope: constant.character.escape.build2.repositories.manifest
+      pop: true
+    - match: '\\\n'
+      scope: constant.character.escape.build2.repositories.manifest
+
+  documentation_comments:
+    - match: '\\;'
+      scope: constant.character.escape.build2.repositories.manifest
+    - match: ';'
+      scope: punctuation.definition.comment.line.documentation.build2.repositories.manifest
+      push: documentation_line_comment
+  documentation_line_comment:
+    - meta_scope: comment.line.documentation.build2.repositories.manifest
+    - match: $
+      pop: true
+
+  other_variable:
+    - include: line_mode
+    - include: documentation_comments
+
+  format_version:
+    - match: '\b[0-9]*\b'
+      scope: constant.numeric.build2.repositories.manifest
+    - match: $
+      pop: true
+
+  location:
+    - include: line_mode
+
+  fragment:
+    - include: line_mode

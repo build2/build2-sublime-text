@@ -4,7 +4,7 @@
     <key>name</key>
     <string>Comments</string>
     <key>scope</key>
-    <string>source.build2.buildfile, source.build2.manifest, source.build2.repositories.manifest</string>
+    <string>source.build2.buildfile, source.build2.manifest, source.build2.repositories.manifest, source.build2.packages.manifest</string>
     <key>settings</key>
     <dict>
       <key>shellVariables</key>
