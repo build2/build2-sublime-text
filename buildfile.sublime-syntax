@@ -17,7 +17,8 @@ contexts:
     - include: assert_directives
     - include: dump_directives
     - include: import_directives
-    - include: define_directives
+    - include: define_declarations
+    - include: config_directives
     - include: dependency_declarations
     - include: adhoc_recipes
     - include: variable_assignments
@@ -401,17 +402,45 @@ contexts:
         6: punctuation.section.braces.end.build2.buildfile
     - include: line_mode
 
-  define_directives:
+  define_declarations:
     - meta_scope: meta.directive.build2.buildfile.define
     - match: '\b(define)\b'
       scope: keyword.declaration.build2.buildfile
-      push: define_directive
-  define_directive:
+      push: define_declaration
+  define_declaration:
     - match: '\b([a-z]+)\b\s*(\:)\s*\b([a-z]+)\b'
       captures:
         1: entity.name.type.build2.buildfile.target.type
         2: punctuation.definition.build2.buildfile
         3: entity.name.type.build2.buildfile.target.type
+    - include: line_mode
+
+  config_directives:
+    - meta_scope: meta.directive.build2.buildfile.define.config
+    - match: '\b(config)\s'
+      scope: keyword.declaration.build2.buildfile.config
+      push: config_directive_attribute_list_optional
+  config_directive_attribute_list_optional:
+    - match: '\['
+      scope: punctuation.section.brackets.begin.build2.buildfile.config.attributes
+      set: config_directive_attribute_list
+    - include: config_directive_variable
+  config_directive_attribute_list:
+    - meta_scope: meta.brackets.build2.buildfile.config.attributes
+    - match: '\b(bool|uint64|uint64s|string|strings|path|paths|dir_path|dir_paths|name|names|name_pair|project_name|target_triplet)\b'
+      scope: storage.type.build2.buildfile.config
+    - match: '\]'
+      scope: punctuation.section.brackets.end.build2.buildfile.config.attributes
+      set: config_directive_variable
+    - include: line_mode
+  config_directive_variable:
+    - match: '\b(config(.[a-zA-Z][a-zA-Z0-9_]*)+)\b'
+      scope: variable.other.build2.buildfile.config
+      set: config_directive_default_assignment_optional
+    - include: line_mode
+  config_directive_default_assignment_optional:
+    - match: '\?\='
+      scope: keyword.operator.assignment.build2.buildfile.config
     - include: line_mode
 
   variable_assignments:
@@ -481,6 +510,8 @@ contexts:
       push: value_attribute
   value_attribute:
     - meta_scope: meta.brackets.build2.buildfile.value_attribute
+    - match: '\b(bool|uint64|uint64s|string|strings|path|paths|dir_path|dir_paths|name|names|name_pair|project_name|target_triplet)\b'
+      scope: storage.type.build2.buildfile.config
     - include: line_mode
     - match: '\]'
       scope: punctuation.section.brackets.end.build2.buildfile
