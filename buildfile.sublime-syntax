@@ -19,6 +19,8 @@ contexts:
     - include: import_directives
     - include: define_declarations
     - include: config_directives
+    - include: conditions
+    - include: loops
     - include: dependency_declarations
     - include: adhoc_recipes
     - include: variable_assignments
@@ -26,8 +28,6 @@ contexts:
     - include: variable_expansions
     - include: eval_contexts
     - include: directories
-    - include: conditions
-    - include: loops
     - include: double_quotes
     - include: single_quotes
 
@@ -520,6 +520,10 @@ contexts:
       scope: keyword.operator.build2.buildfile
 
   adhoc_recipes:
+    - match: '^\s*(\%)\s*(update|test|clean|install|uninstall)\s*$'
+      captures:
+        1: constant.character.build2.buildfile.adhoc
+        2: keyword.declaration.impl.build2.buildfile.adhoc
     - match: '^\s*(\{\{)\s*$'
       scope: punctuation.section.braces.begin.build2.buildfile.adhoc
       push: adhoc_recipe
