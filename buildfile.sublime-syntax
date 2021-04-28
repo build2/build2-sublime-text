@@ -19,6 +19,7 @@ contexts:
     - include: import_directives
     - include: define_directives
     - include: dependency_declarations
+    - include: adhoc_recipes
     - include: variable_assignments
     - include: function_calls
     - include: variable_expansions
@@ -454,6 +455,7 @@ contexts:
       push: eval_context
   eval_context:
     - meta_scope: meta.group.build2.buildfile.eval_context
+    - include: adhoc_inputs_and_outputs
     - include: line_mode
     - include: value_attributes
     - match: '\)'
@@ -485,3 +487,53 @@ contexts:
       pop: true
     - match: '@'
       scope: keyword.operator.build2.buildfile
+
+  adhoc_recipes:
+    - match: '^\s*(\{\{)\s*$'
+      scope: punctuation.section.braces.begin.build2.buildfile.adhoc
+      push: adhoc_recipe
+  adhoc_recipe:
+    - meta_scope: meta.braces.build2.buildfile.adhoc
+    - include: multi_line_comments
+    - include: line_comments
+    - include: adhoc_recipe_diag_commands
+    - include: adhoc_recipe_commands
+    - include: function_calls
+    - include: variable_expansions
+    - include: eval_contexts
+    - include: double_quotes
+    - include: single_quotes
+    - match: '^\s*(\}\})\s*$'
+      scope: punctuation.section.braces.end.build2.buildfile.adhoc
+      pop: true
+
+  adhoc_inputs_and_outputs:
+    - match: '(\$)(\<|\>)(\[)([0-9]+)(\])'
+      captures:
+        1: variable.parameter.build2.buildfile
+        2: variable.parameter.build2.buildfile
+        3: punctuation.section.brackets.begin.build2.buildfile.adhoc.io
+        4: constant.numeric.build2.buildfile
+        5: punctuation.section.brackets.end.build2.buildfile.adhoc.io
+    - match: '(\$)(\<|\>)'
+      captures:
+        1: punctuation.definition.variable.build2.buildfile
+        2: keyword.operator.build2.buildfile.adhoc.io
+
+  adhoc_recipe_diag_commands:
+    - match: '\b(diag)\b'
+      scope: keyword.control.import.build2.buildfile
+      push: adhoc_recipe_diag_command
+  adhoc_recipe_diag_command:
+    - meta_scope: meta.directive.build2.buildfile.adhoc
+    - include: adhoc_inputs_and_outputs
+    - include: line_mode
+
+  adhoc_recipe_commands:
+    - match: '\b(cat|cp|date|diff|echo|env|exit|false|ln|mkdir|mv|rm|rmdir|sed|set|sleep|test|touch|true)\b'
+      scope: keyword.operator.word.build2.buildfile
+      push: adhoc_recipe_command
+  adhoc_recipe_command:
+    - meta_scope: meta.directive.build2.buildfile.adhoc
+    - include: adhoc_inputs_and_outputs
+    - include: line_mode
