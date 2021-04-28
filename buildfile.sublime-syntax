@@ -17,6 +17,7 @@ contexts:
     - include: assert_directives
     - include: dump_directives
     - include: import_directives
+    - include: define_directives
     - include: dependency_declarations
     - include: variable_assignments
     - include: function_calls
@@ -340,7 +341,7 @@ contexts:
     # Package Importation Match
     - match: '([a-zA-Z][a-zA-Z0-9_.\-]*)(\%)([a-z]*)(\{)([a-zA-Z][a-zA-Z0-9_.\-]*)(\})'
       captures:
-        1: variable.other.build2.buildfile.package
+        1: meta.braces.build2.buildfile.target_name
         2: constant.character.build2.buildfile.package.targets
         3: entity.name.type.build2.buildfile.target.type
         4: punctuation.section.braces.begin.build2.buildfile
@@ -348,12 +349,27 @@ contexts:
         6: punctuation.section.braces.end.build2.buildfile
     - include: line_mode
 
+  define_directives:
+    - meta_scope: meta.directive.build2.buildfile.define
+    - match: '\b(define)\b'
+      scope: keyword.declaration.build2.buildfile
+      push: define_directive
+  define_directive:
+    - match: '\b([a-z]*)\b\s*(\:)\s*\b([a-z]*)\b'
+      captures:
+        1: entity.name.type.build2.buildfile.target.type
+        2: punctuation.definition.build2.buildfile
+        3: entity.name.type.build2.buildfile.target.type
+    - include: line_mode
+
   variable_assignments:
     - meta_scope: test
-    - match: '\b(project)\b'
+    - match: '\b(project|extension|backlink)\b'
       scope: variable.language.build2.buildfile
-    - match: '(config.)?(cc|cxx|c)(.export)?(.(poptions|coptions|loptions|libs))?'
+    - match: '\b(config.)?(cc|cxx|c)(.export)?(.(poptions|coptions|loptions|aoptions|libs))?\b'
       scope: variable.language.build2.buildfile
+    - match: '\b([a-zA-Z][a-zA-Z0-9_.]*)\b'
+      scope: variable.other.build2.buildfile
     - match: '(\+=|=\+|=)'
       scope: keyword.operator.assignment.build2.buildfile
       push: variable_assignment
@@ -365,9 +381,9 @@ contexts:
 
   variable_expansions:
     - match: '\$[a-zA-Z][a-zA-Z0-9_.]*\b'
-      scope: variable.other.build2.buildfile
+      scope: variable.parameter.build2.buildfile
     - match: '\$\([a-zA-Z][a-zA-Z0-9_.]*\)'
-      scope: variable.other.build2.buildfile
+      scope: variable.parameter.build2.buildfile
     - match: '(\$)(\()'
       captures:
         1: variable.other.build2.buildfile
