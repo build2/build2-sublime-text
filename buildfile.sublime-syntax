@@ -201,6 +201,8 @@ contexts:
     - include: line_mode
 
   targets:
+    - match: '\b(manifest|testscript)\b'
+      scope: entity.name.type.build2.buildfile
     - include: single_type_targets
     - include: multi_type_targets
     - include: no_type_targets
