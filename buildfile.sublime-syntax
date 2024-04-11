@@ -2,11 +2,22 @@
 ---
 name: build2 buildfile
 file_extensions:
-  - root.build
-  - export.build
   - bootstrap.build
+  - bootstrap.build2
   - config.build
+  - config.build2
+  - export.build
+  - export.build2
+  - root.build
+  - root.build2
+  - src-root.build
+  - src-root.build2
+  - out-root.build
+  - out-root.build2
+  - pre-bdep-sync.build
+  - pre-bdep-sync.build2
   - buildfile
+  - build2file
 scope: source.build2.buildfile
 contexts:
   main:
